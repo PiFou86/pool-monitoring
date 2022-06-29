@@ -121,7 +121,7 @@ uint8_t *Configuration_Impl::parseUintString(const String &str,
 
   int index = 0;
   while ((index = strValue.indexOf(':')) > 0) {
-    int value = strValue.substring(0, index - 1).toInt();
+    int value = strtol(strValue.substring(0, index - 1).c_str(), NULL, 16);
     values.push_back(value);
     strValue = strValue.substring(index + 1);
   }
@@ -139,7 +139,7 @@ uint8_t *Configuration_Impl::parseUintString(const String &str,
 String Configuration_Impl::uintToString(uint8_t *uint, uint8_t length) {
   String str = "";
 
-  str += String(uint[0]);
+  str += String(uint[0], 16);
   for (uint8_t i = 1; i < length; i++) {
     str += ":" + String(uint[i]);
   }

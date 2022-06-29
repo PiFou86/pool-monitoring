@@ -24,11 +24,11 @@ class WiFiConnectionImpl {
   void prepareWiFiManagerParameters();
   void initParameterValues();
   bool tryToConnectToAP();
-  bool startPortal();
 
  public:
   WiFiConnectionImpl();
   void begin();
+  bool startPortal();
 };
 
 extern WiFiConnectionImpl WiFiConnection;

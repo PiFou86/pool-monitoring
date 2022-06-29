@@ -24,3 +24,8 @@
 #elif ESP32
     #define DIAGNOSTIC_PUSH_BUTTON_PIN    16
 #endif
+
+
+// Display 
+#define VERTICAL_SCROLL_DELAY           1000
+#define BACKLIGHT_DELAY                 10000
