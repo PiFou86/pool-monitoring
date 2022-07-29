@@ -1,8 +1,8 @@
 #include "Input/ButtonActionBacklightOn.h"
 
-#include "Display/LCD1602Display.h"
+#include "Display/LCD2004Display.h"
 
-ButtonActionBacklightOn::ButtonActionBacklightOn(LCD1602Display *lcd)
+ButtonActionBacklightOn::ButtonActionBacklightOn(LCD2004Display *lcd)
     : m_lcd(lcd) {}
 
 void ButtonActionBacklightOn::execute() {

@@ -3,6 +3,8 @@
 #include "Configuration.h"
 #include "Input/ButtonAction.h"
 
+#include "Log/Logger.h"
+
 Button::Button(uint8_t pin, ButtonAction *pressAction, ButtonAction *longPressAction)
     : m_pin(pin),
       m_pressAction(pressAction),
@@ -25,11 +27,14 @@ void Button::tick() {
   if (currentDate - this->m_lastChangeDate > BUTTON_DEBOUNCE_DELAY) {
     // Button released
     if (this->m_lastStableState == LOW && buttonState == HIGH) {
+      Logger.infoln("Button released");
       this->m_pressAction->execute();
     } else {
       // Long press
       if (this->m_lastStableState == LOW && buttonState == LOW) {
         if (currentDate - this->m_lastChangeDate > BUTTON_LONG_PRESS_DELAY) {
+          Logger.infoln("Button long pressed");
+          this->m_lastChangeDate = currentDate;
           this->m_longPressAction->execute();
         }
       }

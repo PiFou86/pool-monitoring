@@ -26,9 +26,6 @@ private:
     String m_mqttPassword;
     String m_mqttTopicPrefix;
 
-    static uint8_t *parseUintString(const String &str, size_t &addressSize);
-    static String uintToString(uint8_t *uint, uint8_t length);
-
     static const String clientId;
 
 public:
@@ -72,6 +69,14 @@ public:
 
     inline unsigned long getReadInterval() const { return 15000; };
     inline const String &getClientId() const { return clientId; };
+
+
+    void printInfos() const;
+
+
+    static uint8_t *parseAddressString(const String &str, size_t &addressSize);
+    static String addressToString(uint8_t *uint, uint8_t length);
+
 };
 
 extern Configuration_Impl Configuration;

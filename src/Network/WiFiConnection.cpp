@@ -6,11 +6,14 @@
 #include <WiFi.h>
 #endif
 
+#include <DallasTemperature.h>
+#include <OneWire.h>
 #include <WiFiManager.h>
 
 #include "Configuration.h"
 #include "Configuration/Configuration.h"
 #include "Log/Logger.h"
+#include "Log/GeneralInformation.h"
 
 class IPAddressParameter : public WiFiManagerParameter {
  public:
@@ -60,6 +63,9 @@ void WiFiConnectionImpl::prepareWiFiManager() {
 
   this->m_wifiManager->setAPCallback([](WiFiManager *p_wiFiManager) {
     Logger.infoln("Connexion au réseau WiFi échouée, on lance le portail !");
+    GeneralInformation.displayMessage("AP lanched !");
+    GeneralInformation.displayMessage("SSID : " + WiFi.softAPSSID());
+    GeneralInformation.displayMessage("IP: " + WiFi.softAPIP().toString());
   });
 
   this->m_wifiManager->setSaveParamsCallback([this]() {
@@ -80,11 +86,11 @@ void WiFiConnectionImpl::prepareWiFiManager() {
     Configuration.setMqttPassword(this->m_mqtt_server_password->getValue());
     Configuration.setMqttTopicPrefix(this->m_mqtt_topic_prefix->getValue());
 
+    Configuration.printInfos();
+
     Configuration.save();
-    // Exemple d'actions...
-    // Sauvegarde des données en JSON
-    // Redémarrage : ESP.restart();
-    // etc.
+    // ESP.restart();
+
   });
 
   this->m_wifiManager->setConfigPortalTimeout(180);
@@ -99,6 +105,10 @@ void WiFiConnectionImpl::prepareWiFiManager() {
 }
 
 void WiFiConnectionImpl::prepareWiFiManagerParameters() {
+  this->m_poolHeaterInAddress = new WiFiManagerParameter("sensor_heater_in_address", "Pool Heater In Address", Configuration.getPoolHeaterInAddressAsString().c_str(), 50);
+  this->m_poolHeaterOutAddress = new WiFiManagerParameter("sensor_heater_out_address", "Pool Heater Out Address", Configuration.getPoolHeaterOutAddressAsString().c_str(), 50);
+
+
   this->m_mqtt_server_ip = new IPAddressParameter(
       "mqtt_server_ip", "MQTT Server IP", Configuration.getMqttServerIP());
   this->m_mqtt_server_port =
@@ -115,6 +125,8 @@ void WiFiConnectionImpl::prepareWiFiManagerParameters() {
                                Configuration.getMqttTopicPrefix().c_str(), 50);
 
   this->m_wifiManager->setParamsPage(true);
+  std::vector<const char *> menu = {"wifi","info","param","sep","restart","exit"};
+  this->m_wifiManager->setMenu(menu);
   this->m_wifiManager->addParameter(this->m_poolHeaterInAddress);
   this->m_wifiManager->addParameter(this->m_poolHeaterOutAddress);
 
@@ -123,6 +135,48 @@ void WiFiConnectionImpl::prepareWiFiManagerParameters() {
   this->m_wifiManager->addParameter(this->m_mqtt_server_user);
   this->m_wifiManager->addParameter(this->m_mqtt_server_password);
   this->m_wifiManager->addParameter(this->m_mqtt_topic_prefix);
+
+  OneWire ow(ONE_WIRE_SENSOR_PIN);
+  DallasTemperature DS18B20sensors(&ow);
+  DS18B20sensors.begin();
+
+  DeviceAddress Thermometer;
+
+  int deviceCount = 0;
+  Logger.infoln("Locating devices...");
+  Logger.info("Found ");
+  deviceCount = DS18B20sensors.getDeviceCount();
+  Logger.info(String(deviceCount), false);
+  Logger.infoln(" devices.", false);
+  Logger.infoln("", false);
+
+  Logger.infoln("Printing addresses...");
+  std::vector<String> addressesTemp;
+  for (size_t i = 0; i < deviceCount; i++) {
+    DS18B20sensors.getAddress(Thermometer, i);
+    String address = Configuration.addressToString(Thermometer, 8);
+
+    DS18B20sensors.requestTemperatures();
+
+    float temperature = DS18B20sensors.getTempC(Thermometer);
+
+    Logger.infoln(" - " + address + " : " + String(temperature));
+    addressesTemp.push_back(address + " : " + String(temperature));
+  }
+
+  String htmlAdressesString = "Adresses :<ul>";
+  for (size_t i = 0; i < addressesTemp.size(); i++) {
+    htmlAdressesString += "<li>" + addressesTemp[i] + "</li>";
+  }
+  htmlAdressesString += "</ul>";
+
+  Logger.infoln(htmlAdressesString);
+
+  char *html = new char[htmlAdressesString.length() + 1];
+  strcpy(html, htmlAdressesString.c_str());
+
+  this->m_ds18b20_addresses = new WiFiManagerParameter(html);
+  this->m_wifiManager->addParameter(this->m_ds18b20_addresses);
 }
 
 void WiFiConnectionImpl::initParameterValues() {
@@ -131,11 +185,15 @@ void WiFiConnectionImpl::initParameterValues() {
   this->m_poolHeaterOutAddress->setValue(
       Configuration.getPoolHeaterOutAddressAsString().c_str(), 32);
 
-  this->m_mqtt_server_ip->setValue(Configuration.getMqttServerIP().toString().c_str(), 15);
-  this->m_mqtt_server_port->setValue(String(Configuration.getMqttServerPort()).c_str(), 6);
+  this->m_mqtt_server_ip->setValue(
+      Configuration.getMqttServerIP().toString().c_str(), 15);
+  this->m_mqtt_server_port->setValue(
+      String(Configuration.getMqttServerPort()).c_str(), 6);
   this->m_mqtt_server_user->setValue(Configuration.getMqttUser().c_str(), 20);
-  this->m_mqtt_server_password->setValue(Configuration.getMqttPassword().c_str(), 20);
-  this->m_mqtt_topic_prefix->setValue(Configuration.getMqttTopicPrefix().c_str(), 50);
+  this->m_mqtt_server_password->setValue(
+      Configuration.getMqttPassword().c_str(), 20);
+  this->m_mqtt_topic_prefix->setValue(
+      Configuration.getMqttTopicPrefix().c_str(), 50);
 }
 
 bool WiFiConnectionImpl::tryToConnectToAP() {
@@ -146,7 +204,8 @@ bool WiFiConnectionImpl::tryToConnectToAP() {
 }
 
 bool WiFiConnectionImpl::startPortal() {
-  this->m_wifiManager->startWebPortal();
+  this->m_wifiManager->startConfigPortal(CONFIGURATION_PORTAL_SSID);
+  //this->m_wifiManager->startWebPortal();
 
   return WiFi.status() == WL_CONNECTED;
 }

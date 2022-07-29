@@ -2,12 +2,12 @@
 
 #include "ButtonAction.h"
 
-class LCD1602Display;
+class LCD2004Display;
 class ButtonActionBacklightOn : public ButtonAction {
  private:
-  LCD1602Display *m_lcd;
+  LCD2004Display *m_lcd;
 
  public:
-  ButtonActionBacklightOn(LCD1602Display *lcd);
+  ButtonActionBacklightOn(LCD2004Display *lcd);
   virtual void execute();
 };

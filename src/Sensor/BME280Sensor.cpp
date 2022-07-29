@@ -8,11 +8,12 @@ BME280Sensor::BME280Sensor(const String &id, SensorAction *sensorAction) : Senso
 {
     Adafruit_BME280 *bme280 = new Adafruit_BME280();
 
-    bool status = bme280->begin();
+    bool status = bme280->begin(0x76);
     if (!status) {
         Logger.errorln("BME280 not detected !");
     } else {
         this->m_bme280 = bme280;
+        this->ready();
     }
 }
 

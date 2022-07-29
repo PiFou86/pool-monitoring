@@ -8,6 +8,8 @@ class Adafruit_BME280;
 class BME280Sensor : public Sensor {
 public:
     BME280Sensor(const String &id, SensorAction *sensorAction);
+
+protected:
     virtual void readAndInform();
 
 private:

@@ -19,6 +19,7 @@ class WiFiConnectionImpl {
   WiFiManagerParameter *m_mqtt_server_user;
   WiFiManagerParameter *m_mqtt_server_password;
   WiFiManagerParameter *m_mqtt_topic_prefix;
+  WiFiManagerParameter *m_ds18b20_addresses;
 
   void prepareWiFiManager();
   void prepareWiFiManagerParameters();

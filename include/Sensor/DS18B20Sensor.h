@@ -8,6 +8,8 @@
 class DS18B20Sensor : public Sensor {
 public:
     DS18B20Sensor(const String &id, SensorAction *sensorAction, OneWire *oneWire, const uint8_t* sensorAddress);
+
+protected:
     virtual void readAndInform();
 
 private:

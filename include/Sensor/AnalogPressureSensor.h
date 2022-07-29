@@ -7,6 +7,8 @@
 class AnalogPressureSensor : public Sensor {
 public:
     AnalogPressureSensor(const String &id, SensorAction *sensorAction, uint8_t pin, float minPressure, float maxPressure);
+
+protected:
     virtual void readAndInform();
 
 private:
