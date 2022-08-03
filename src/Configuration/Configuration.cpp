@@ -145,10 +145,10 @@ void Configuration_Impl::save() {
 
   serializeJson(doc, Serial);
   Serial.println();
-  size_t error = serializeJson(doc, file);
+  size_t byteCount = serializeJson(doc, file);
   file.close();
 
-  if (error) {
+  if (byteCount == 0) {
     Logger.errorln(F("Failed to write config.json"));
     return;
   }
