@@ -259,7 +259,7 @@ void Configuration_Impl::printInfos() const {
   Logger.infoln(String(F("  mqttUser: ")) + this->m_mqttUser);
   Logger.infoln(String(F("  mqttPassword: ")) + this->m_mqttPassword);
   Logger.infoln(String(F("  mqttTopicPrefix: ")) + this->m_mqttTopicPrefix);
-  Logger.infoln(String(F("  loggerLevel: ")) + String(this->m_loggerLevel));
+  Logger.infoln(String(F("  debug: ")) + String(this->m_loggerLevel));
   Logger.infoln(F("---------------------"));
   Logger.infoln(F(""));
 }
