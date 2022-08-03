@@ -8,7 +8,7 @@ class GeneralInformationImpl {
   MessageDisplay *m_messageDisplay;
 
  public:
-  inline GeneralInformationImpl() : m_messageDisplay(nullptr){};
+  inline GeneralInformationImpl() : m_messageDisplay(nullptr) { };
   inline void setMessageDisplay(MessageDisplay *messageDisplay) {
     this->m_messageDisplay = messageDisplay;
   }

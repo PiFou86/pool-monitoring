@@ -10,15 +10,22 @@ BME280Sensor::BME280Sensor(const String &id, SensorAction *sensorAction) : Senso
 
     bool status = bme280->begin(0x76);
     if (!status) {
-        Logger.errorln("BME280 not detected !");
+        Logger.errorln(F("BME280 not detected !"));
     } else {
+        Logger.infoln(F("BME280  detected !"));
         this->m_bme280 = bme280;
         this->ready();
     }
 }
 
 void BME280Sensor::readAndInform() {
-    this->dataRead("temperature", this->m_bme280->readTemperature(), "°C");
-    this->dataRead("pressure", this->m_bme280->readPressure(), "hPa");
-    this->dataRead("humidity", this->m_bme280->readHumidity(), "%");
+    this->dataRead(F("temperature"), this->m_bme280->readTemperature(), F("°C"));
+    this->dataRead(F("pressure"), this->m_bme280->readPressure(), F("hPa"));
+    this->dataRead(F("humidity"), this->m_bme280->readHumidity(), F("%"));
+}
+
+void BME280Sensor::discovery() {
+  this->actionDiscovery(String(F("temperature")), this->getId(), String(F("hPa")));
+  this->actionDiscovery(String(F("pressure")), this->getId(), String(F("°C")));
+  this->actionDiscovery(String(F("humidity")), this->getId(), String(F("%")));
 }

@@ -1,12 +1,11 @@
 #include "Display/LCD2004Display.h"
 
 #include <LiquidCrystal_I2C.h>
+#include <math.h>
 
-#include "Configuration.h"
+#include "Constantes.h"
 #include "Configuration/Configuration.h"
 #include "Log/Logger.h"
-
-#include <math.h>
 
 const size_t maxLines = 4;
 const char inChar = 0b01111111;
@@ -26,13 +25,10 @@ LCD2004Display::LCD2004Display()
       m_currentLine(0),
       m_startedBacklightDate(0),
       m_backlightIsOn(false),
-      m_isReady(false) {
-  Logger.infoln("LCD2004Display::LCD2004Display()");
-  // Logger.infoln("Creating LCD2004Display...");
+      m_isReady(false),
+      m_messageIndex(-1) {
   this->m_lcd = new LiquidCrystal_I2C(0x27, columnCount, lineCount);
-  // Logger.infoln("begining LCD2004Display...");
   this->m_lcd->begin(columnCount, lineCount);
-  // Logger.infoln("Setting LCD2004Display backlight...");
   this->backlight();
   this->clearMessages();
   this->ready();
@@ -45,7 +41,7 @@ void LCD2004Display::tick() {
 
   unsigned long currentDate = millis();
 
-  if (currentDate - this->m_lastUpdate > VERTICAL_SCROLL_DELAY) {
+  if (this->isDirty() && currentDate - this->m_lastUpdate > VERTICAL_SCROLL_DELAY) {
     ++this->m_currentLine;
 
     if (this->m_currentLine > maxLines - lineCount) {
@@ -59,6 +55,7 @@ void LCD2004Display::tick() {
     this->displayMessage(getLine(this->m_currentLine + 3), false);
 
     this->m_lastUpdate = currentDate;
+    this->m_isDirty = false;
   }
 
   if (this->m_backlightIsOn &&
@@ -90,7 +87,7 @@ String LCD2004Display::getLine(const size_t &lineNumber) const {
       break;
   }
 
-  return "Undefined line information";
+  return F("Undefined line information");
 }
 
 void LCD2004Display::backlight() { this->setBacklight(true); }
@@ -111,11 +108,10 @@ void LCD2004Display::clearMessages() {
 
 void LCD2004Display::displayMessage(const String &message,
                                     const bool withBacklight) {
-  // this->m_lcd->clear();
-  // this->m_lcd->setCursor(0, 0);
+
   String messageToDisplay = message.substring(0, 20);
 
-  if (this->m_messageIndex == 3) {
+  if (this->m_messageIndex >= 3) {
     this->m_messages[0] = this->m_messages[1];
     this->m_messages[1] = this->m_messages[2];
     this->m_messages[2] = this->m_messages[3];
@@ -136,5 +132,22 @@ void LCD2004Display::displayMessage(const String &message,
 
   if (withBacklight) {
     this->backlight();
+  }
+}
+
+void LCD2004Display::setValue(const String &name, const float &value) {
+  this->dirty();
+  if (name == "pool_pressure_pressure") {
+    this->m_waterPressure = value;
+  } else if (name == "pool_heater_in_temperature") {
+    this->m_waterInTemperature = value;
+  } else if (name == "pool_heater_out_temperature") {
+    this->m_waterOutTemperature = value;
+  } else if (name == "pool_outdoor_temperature") {
+    this->m_outdoorTemperature = value;
+  } else if (name == "pool_outdoor_humidity") {
+    this->m_outdoorHumidity = value;
+  } else if (name == "pool_outdoor_pressure") {
+    this->m_outdoorPressure = value;
   }
 }

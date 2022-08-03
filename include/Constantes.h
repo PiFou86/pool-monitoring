@@ -22,9 +22,11 @@
 #define BUTTON_LONG_PRESS_DELAY        5000
 
 #if ESP8266
-    #define DIAGNOSTIC_PUSH_BUTTON_PIN    15   
+    #define DIAGNOSTIC_PUSH_BUTTON_PIN    15  
+    #define ONE_WIRE_SENSOR_PIN           2
 #elif ESP32
-    #define DIAGNOSTIC_PUSH_BUTTON_PIN    16
+    #define DIAGNOSTIC_PUSH_BUTTON_PIN    13
+    #define ONE_WIRE_SENSOR_PIN           5
 #endif
 
 
@@ -34,4 +36,3 @@
 
 
 // OneWire configuration  GPIO 2 = D4
-#define ONE_WIRE_SENSOR_PIN             2

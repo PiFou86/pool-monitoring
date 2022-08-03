@@ -6,11 +6,9 @@
 #include <WiFi.h>
 #endif
 
-#include <DallasTemperature.h>
-#include <OneWire.h>
 #include <WiFiManager.h>
 
-#include "Configuration.h"
+#include "Constantes.h"
 #include "Configuration/Configuration.h"
 #include "Log/Logger.h"
 #include "Log/GeneralInformation.h"
@@ -51,7 +49,17 @@ class FloatParameter : public WiFiManagerParameter {
   }
 };
 
-WiFiConnectionImpl::WiFiConnectionImpl() {}
+WiFiConnectionImpl::WiFiConnectionImpl() 
+: m_wifiManager(nullptr),
+  m_poolHeaterInAddress(nullptr),
+  m_poolHeaterOutAddress(nullptr),
+  m_mqtt_server_ip(nullptr),
+  m_mqtt_server_port(nullptr),
+  m_mqtt_server_user(nullptr),
+  m_mqtt_server_password(nullptr),
+  m_mqtt_topic_prefix(nullptr),
+  m_ds18b20_addresses(nullptr)
+ { ; }
 
 void WiFiConnectionImpl::begin() {
   this->prepareWiFiManager();
@@ -62,16 +70,15 @@ void WiFiConnectionImpl::prepareWiFiManager() {
   this->m_wifiManager = new WiFiManager();
 
   this->m_wifiManager->setAPCallback([](WiFiManager *p_wiFiManager) {
-    Logger.infoln("Connexion au réseau WiFi échouée, on lance le portail !");
-    GeneralInformation.displayMessage("AP lanched !");
-    GeneralInformation.displayMessage("SSID : " + WiFi.softAPSSID());
-    GeneralInformation.displayMessage("IP: " + WiFi.softAPIP().toString());
+    Logger.infoln(F("Connexion au réseau WiFi échouée, on lance le portail !"));
+    GeneralInformation.displayMessage(F("AP lanched !"));
+    GeneralInformation.displayMessage(String(F("SSID : ")) + WiFi.softAPSSID());
+    GeneralInformation.displayMessage(String(F("IP: ")) + WiFi.softAPIP().toString());
   });
 
   this->m_wifiManager->setSaveParamsCallback([this]() {
     Logger.infoln(
-        "Sauvegarde de la configuration effectuée par l'utilisateur dans le "
-        "portail...");
+        F("Sauvegarde de la configuration effectuée par l'utilisateur dans le portail..."));
 
     Configuration.setPoolHeaterInAddress(
         this->m_poolHeaterInAddress->getValue());
@@ -136,39 +143,13 @@ void WiFiConnectionImpl::prepareWiFiManagerParameters() {
   this->m_wifiManager->addParameter(this->m_mqtt_server_password);
   this->m_wifiManager->addParameter(this->m_mqtt_topic_prefix);
 
-  OneWire ow(ONE_WIRE_SENSOR_PIN);
-  DallasTemperature DS18B20sensors(&ow);
-  DS18B20sensors.begin();
+  std::vector<String> addressesTemp = Configuration.getDS18B20SensorAddresses();
 
-  DeviceAddress Thermometer;
-
-  int deviceCount = 0;
-  Logger.infoln("Locating devices...");
-  Logger.info("Found ");
-  deviceCount = DS18B20sensors.getDeviceCount();
-  Logger.info(String(deviceCount), false);
-  Logger.infoln(" devices.", false);
-  Logger.infoln("", false);
-
-  Logger.infoln("Printing addresses...");
-  std::vector<String> addressesTemp;
-  for (size_t i = 0; i < deviceCount; i++) {
-    DS18B20sensors.getAddress(Thermometer, i);
-    String address = Configuration.addressToString(Thermometer, 8);
-
-    DS18B20sensors.requestTemperatures();
-
-    float temperature = DS18B20sensors.getTempC(Thermometer);
-
-    Logger.infoln(" - " + address + " : " + String(temperature));
-    addressesTemp.push_back(address + " : " + String(temperature));
-  }
-
-  String htmlAdressesString = "Adresses :<ul>";
+  String htmlAdressesString = F("Adresses :<ul>");
   for (size_t i = 0; i < addressesTemp.size(); i++) {
-    htmlAdressesString += "<li>" + addressesTemp[i] + "</li>";
+    htmlAdressesString += String(F("<li>")) + addressesTemp[i] + String(F("</li>"));
   }
-  htmlAdressesString += "</ul>";
+  htmlAdressesString += F("</ul>");
 
   Logger.infoln(htmlAdressesString);
 

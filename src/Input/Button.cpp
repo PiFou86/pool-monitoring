@@ -1,6 +1,6 @@
 #include "Input/Button.h"
 
-#include "Configuration.h"
+#include "Constantes.h"
 #include "Input/ButtonAction.h"
 
 #include "Log/Logger.h"
@@ -12,7 +12,7 @@ Button::Button(uint8_t pin, ButtonAction *pressAction, ButtonAction *longPressAc
       m_lastChangeDate(0),
       m_lastState(HIGH),
       m_lastStableState(HIGH) {
-  pinMode(this->m_pin, INPUT_PULLUP);
+  pinMode(this->m_pin, INPUT);
 }
 
 void Button::tick() {
@@ -27,13 +27,13 @@ void Button::tick() {
   if (currentDate - this->m_lastChangeDate > BUTTON_DEBOUNCE_DELAY) {
     // Button released
     if (this->m_lastStableState == LOW && buttonState == HIGH) {
-      Logger.infoln("Button released");
+      Logger.verboseln(F("Button released"));
       this->m_pressAction->execute();
     } else {
       // Long press
       if (this->m_lastStableState == LOW && buttonState == LOW) {
         if (currentDate - this->m_lastChangeDate > BUTTON_LONG_PRESS_DELAY) {
-          Logger.infoln("Button long pressed");
+          Logger.verboseln(F("Button long pressed"));
           this->m_lastChangeDate = currentDate;
           this->m_longPressAction->execute();
         }

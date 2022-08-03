@@ -1,12 +1,15 @@
 #pragma once
 
 #include <Arduino.h>
+#include <vector>
 
 #if ESP8266
 #include <ESP8266WiFi.h>
 #elif ESP32
 #include <WiFi.h>
 #endif
+
+#include "Log/Logger.h"
 
 class Configuration_Impl {
 private:
@@ -25,6 +28,8 @@ private:
     String m_mqttUser;
     String m_mqttPassword;
     String m_mqttTopicPrefix;
+
+    LoggerLevel m_loggerLevel;
 
     static const String clientId;
 
@@ -70,13 +75,25 @@ public:
     inline unsigned long getReadInterval() const { return 15000; };
     inline const String &getClientId() const { return clientId; };
 
-
     void printInfos() const;
 
+    ///////////////////////////////////////////////////////////////////////////
+    inline String getMqttStatus() const { return String(F("homeassistant/sensor/")) + this->m_mqttTopicPrefix + String(F("/status")); };
+    inline String getMqttWillTopic() const { return this->getMqttStatus(); };
+
+
+    ///////////////////////////////////////////////////////////////////////////
+    inline LoggerLevel getLoggerLevel() const { return this->m_loggerLevel; };
+    inline void setLoggerLevel(const LoggerLevel &loggerLevel) { this->m_loggerLevel = loggerLevel; this->dirty(); };
+
+
+    ///////////////////////////////////////////////////////////////////////////
+    void executeCommand(const String &command);
 
     static uint8_t *parseAddressString(const String &str, size_t &addressSize);
-    static String addressToString(uint8_t *uint, uint8_t length);
-
+    static String addressToString(const uint8_t *uint, uint8_t length);
+    static std::vector<String> getDS18B20SensorAddresses();
+    static std::vector<u16_t> getI2CAddresses();
 };
 
 extern Configuration_Impl Configuration;

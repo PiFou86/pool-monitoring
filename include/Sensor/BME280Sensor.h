@@ -2,16 +2,16 @@
 #include "Arduino.h"
 #include "Sensor.h"
 
-
 class Adafruit_BME280;
 
 class BME280Sensor : public Sensor {
-public:
-    BME280Sensor(const String &id, SensorAction *sensorAction);
+ public:
+  BME280Sensor(const String &id, SensorAction *sensorAction);
 
-protected:
-    virtual void readAndInform();
+ protected:
+  virtual void readAndInform();
+  virtual void discovery();
 
-private:
-    Adafruit_BME280 *m_bme280;
+ private:
+  Adafruit_BME280 *m_bme280;
 };

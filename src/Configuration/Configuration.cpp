@@ -1,9 +1,10 @@
 #include "Configuration/Configuration.h"
 
-#include <Arduino.h>
 #include <ArduinoJson.h>
 
 #include <vector>
+
+#include "Constantes.h"
 
 #if ESP8266
 #include <LittleFS.h>
@@ -11,19 +12,27 @@
 #include <SPIFFS.h>
 #endif
 
-#include "Log/Logger.h"
-
+#include <DallasTemperature.h>
+#include <OneWire.h>
 #include <Wire.h>
 
-void testerAdresses();
+#include "Log/Logger.h"
 
 Configuration_Impl::Configuration_Impl()
     : m_isLoaded(false),
       m_isDirty(false),
       m_poolHeaterInAddress(nullptr),
       m_poolHeaterInAddressSize(0),
+      m_poolHeaterInAddressString(""),
       m_poolHeaterOutAddress(nullptr),
-      m_poolHeaterOutAddressSize(0) {
+      m_poolHeaterOutAddressSize(0),
+      m_poolHeaterOutAddressString(""),
+      m_mqttServerIP(IPAddress(0, 0, 0, 0)),
+      m_mqttServerPort(0),
+      m_mqttUser(""),
+      m_mqttPassword(""),
+      m_mqttTopicPrefix(""),
+      m_loggerLevel(LoggerLevel::INFO) {
   this->m_poolHeaterInAddress = new uint8_t[8];
   this->m_poolHeaterInAddressSize = 8;
   this->m_poolHeaterOutAddress = new uint8_t[8];
@@ -39,73 +48,75 @@ Configuration_Impl::Configuration_Impl()
   this->setMqttUser("");
   this->setMqttPassword("");
   this->setMqttTopicPrefix("");
+  this->setLoggerLevel(LoggerLevel::INFO);
+
+  this->m_isDirty = false;
 }
 
 void Configuration_Impl::begin() {
-  Logger.infoln("Configuration_Impl::begin()");
 #if ESP8266
   LittleFS.begin();
 #elif ESP32
   SPIFFS.begin(true);
 #endif
 
-  Wire.begin();
-  testerAdresses();
+  // Configuration_Impl::getI2CAddresses();
 
-  Logger.infoln("Loading configuration...");
+  Logger.infoln(F("Loading configuration..."));
   this->load();
 }
 
 void Configuration_Impl::load() {
   StaticJsonDocument<2048> doc;
 
-  Logger.infoln("Loading configuration from file...");
+  Logger.infoln(F("Loading configuration from file..."));
 #if ESP8266
   File file = LittleFS.open("/config.json", "r");
 #elif ESP32
   File file = SPIFFS.open("/config.json", "r");
 #endif
   if (!file) {
-    Logger.errorln("Failed to open config.json");
+    Logger.errorln(F("Failed to open config.json"));
     return;
   }
 
-  Logger.infoln("Deserializing configuration...");
+  Logger.verboseln(F("Deserializing configuration..."));
   DeserializationError error = deserializeJson(doc, file);
   file.close();
 
   if (error) {
-    Logger.errorln("Failed to parse config.json");
+    Logger.errorln(F("Failed to parse config.json"));
     return;
   }
 
-  Logger.infoln("Setting configuration...");
+  Logger.verboseln(F("Setting configuration..."));
   serializeJson(doc, Serial);
 
-  Logger.infoln("Parsing DS18B20 addresses...");
+  Logger.verboseln(F("Parsing DS18B20 addresses..."));
   this->setPoolHeaterInAddress(doc["poolHeaterInAddress"].as<String>());
   this->setPoolHeaterOutAddress(doc["poolHeaterOutAddress"].as<String>());
 
-  Logger.infoln("Parsing MQTT information...");
+  Logger.verboseln(F("Parsing MQTT information..."));
   IPAddress mqttServerIP;
-  mqttServerIP.fromString(doc["mqttServerIP"].as<String>());
+  mqttServerIP.fromString(doc["mqttServerIP"] | "8.8.8.8");
   this->setMqttServerIP(mqttServerIP);
-  this->setMqttServerPort(doc["mqttServerPort"].as<uint16_t>());
-  this->setMqttUser(doc["mqttUser"].as<String>());
-  this->setMqttPassword(doc["mqttPassword"].as<String>());
-  this->setMqttTopicPrefix(doc["mqttTopicPrefix"].as<String>());
+  this->setMqttServerPort(doc["mqttServerPort"] | 1883);
+  this->setMqttUser(doc["mqttUser"] | "mqttUser");
+  this->setMqttPassword(doc["mqttPassword"] | "Passw0rd");
+  this->setMqttTopicPrefix(doc["mqttTopicPrefix"] | "swimmingpool");
+  this->setLoggerLevel(doc["loggerLevel"] | LoggerLevel::INFO);
 
   this->m_isLoaded = true;
   this->m_isDirty = false;
 
-  Logger.infoln("Configuration loaded !");
-  Logger.infoln("");
+  Logger.infoln(F("Configuration loaded !"));
+  Logger.infoln(F(""));
 
   this->printInfos();
 }
 
 void Configuration_Impl::save() {
-  Logger.infoln("Saving configuration...");
+  Logger.infoln(F("Saving configuration..."));
 
   this->printInfos();
 
@@ -118,8 +129,9 @@ void Configuration_Impl::save() {
   doc["mqttUser"] = this->m_mqttUser;
   doc["mqttPassword"] = this->m_mqttPassword;
   doc["mqttTopicPrefix"] = this->m_mqttTopicPrefix;
+  doc["loggerLevel"] = this->m_loggerLevel;
 
-  Logger.infoln("Saving configuration to file...");
+  Logger.verboseln(F("Saving configuration to file..."));
 #if ESP8266
   File file = LittleFS.open("/config.json", "w");
 #elif ESP32
@@ -127,16 +139,17 @@ void Configuration_Impl::save() {
 #endif
 
   if (!file) {
-    Logger.errorln("Failed to open config.json");
+    Logger.errorln(F("Failed to open config.json"));
     return;
   }
 
   serializeJson(doc, Serial);
+  Serial.println();
   size_t error = serializeJson(doc, file);
   file.close();
 
   if (error) {
-    Logger.errorln("Failed to write config.json");
+    Logger.errorln(F("Failed to write config.json"));
     return;
   }
 
@@ -145,21 +158,19 @@ void Configuration_Impl::save() {
 
 uint8_t *Configuration_Impl::parseAddressString(const String &str,
                                                 size_t &addressSize) {
-  Logger.infoln("Trying to parse " + str);
+  Logger.verboseln(String(F("Trying to parse ")) + str);
   std::vector<uint8_t> values;
   String strValue = str;
 
   int index = 0;
   while ((index = strValue.indexOf(':')) > 0) {
     String addressPart = strValue.substring(0, index);
-    //Logger.infoln("Address part read : " + addressPart);
     int value = strtol(addressPart.c_str(), NULL, 16);
     values.push_back(value);
     strValue = strValue.substring(index + 1);
   }
 
   if (strValue.length() > 0) {
-    //Logger.infoln("Address part read : " + strValue);
     int value = strtol(strValue.c_str(), NULL, 16);
     values.push_back(value);
   }
@@ -171,19 +182,21 @@ uint8_t *Configuration_Impl::parseAddressString(const String &str,
 
   addressSize = values.size();
 
-  Logger.infoln("Parsing completed. Size : " + String(addressSize));
+  Logger.verboseln(String(F("Parsing completed. Size : ")) +
+                   String(addressSize));
 
   return uint;
 }
 
-String Configuration_Impl::addressToString(uint8_t *uint, uint8_t length) {
-  Logger.infoln("Trying to convert address in string (" + String(length) +
-                " byte(s)...");
+String Configuration_Impl::addressToString(const uint8_t *uint,
+                                           uint8_t length) {
+  Logger.verboseln(String(F("Trying to convert address in string (")) +
+                   String(length) + String(F(" byte(s)...")));
   String str = "";
 
-  str += String(uint[0], 16);
+  str += String(uint[0], HEX);
   for (uint8_t i = 1; i < length; i++) {
-    str += ":" + String(uint[i], 16);
+    str += ":" + String(uint[i], HEX);
   }
 
   return str;
@@ -191,12 +204,14 @@ String Configuration_Impl::addressToString(uint8_t *uint, uint8_t length) {
 
 void Configuration_Impl::setPoolHeaterInAddress(
     const String &poolHeaterInAddress) {
-  Logger.infoln("Setting pool heater in address to " + poolHeaterInAddress);
+  Logger.verboseln(String(F("Setting pool heater in address to ")) +
+                   poolHeaterInAddress);
 
   if (this->m_poolHeaterInAddress != nullptr) {
     delete[] this->m_poolHeaterInAddress;
     this->m_poolHeaterInAddress = nullptr;
     this->m_poolHeaterInAddressSize = 0;
+    this->m_poolHeaterInAddressString = "";
   }
 
   this->m_poolHeaterInAddress =
@@ -204,78 +219,202 @@ void Configuration_Impl::setPoolHeaterInAddress(
   this->m_poolHeaterInAddressString = addressToString(
       this->m_poolHeaterInAddress, this->m_poolHeaterInAddressSize);
 
-  Logger.infoln("Pool heater in address set to " +
-                this->m_poolHeaterInAddressString);
+  Logger.verboseln(String(F("Pool heater in address set to ")) +
+                   this->m_poolHeaterInAddressString);
   this->dirty();
 }
 
 void Configuration_Impl::setPoolHeaterOutAddress(
     const String &poolHeaterOutAddress) {
-  Logger.infoln("Setting pool heater out address to " + poolHeaterOutAddress);
+  Logger.verboseln(String(F("Setting pool heater out address to ")) +
+                   poolHeaterOutAddress);
 
   if (this->m_poolHeaterOutAddress != nullptr) {
     delete[] this->m_poolHeaterOutAddress;
     this->m_poolHeaterOutAddress = nullptr;
     this->m_poolHeaterOutAddressSize = 0;
+    this->m_poolHeaterOutAddressString = "";
   }
 
   this->m_poolHeaterOutAddress = parseAddressString(
       poolHeaterOutAddress, this->m_poolHeaterOutAddressSize);
   this->m_poolHeaterOutAddressString = addressToString(
       this->m_poolHeaterOutAddress, this->m_poolHeaterOutAddressSize);
-  Logger.infoln("Pool heater out address set to " +
-                this->m_poolHeaterOutAddressString);
+  Logger.verboseln(String(F("Pool heater out address set to ")) +
+                   this->m_poolHeaterOutAddressString);
   this->dirty();
 }
 
 void Configuration_Impl::printInfos() const {
-  Logger.infoln("Configuration infos :");
-  Logger.infoln("---------------------");
-  Logger.infoln("  poolHeaterInAddress: " + this->m_poolHeaterInAddressString);
-  Logger.infoln("  poolHeaterOutAddress: " +
+  Logger.infoln(F("Configuration infos :"));
+  Logger.infoln(F("---------------------"));
+  Logger.infoln(String(F("  poolHeaterInAddress: ")) +
+                this->m_poolHeaterInAddressString);
+  Logger.infoln(String(F("  poolHeaterOutAddress: ")) +
                 this->m_poolHeaterOutAddressString);
-  Logger.infoln("  mqttServerIP: " + this->m_mqttServerIP.toString());
-  Logger.infoln("  mqttServerPort: " + String(this->m_mqttServerPort));
-  Logger.infoln("  mqttUser: " + this->m_mqttUser);
-  Logger.infoln("  mqttPassword: " + this->m_mqttPassword);
-  Logger.infoln("  mqttTopicPrefix: " + this->m_mqttTopicPrefix);
-  Logger.infoln("---------------------");
-  Logger.infoln("");
+  Logger.infoln(String(F("  mqttServerIP: ")) +
+                this->m_mqttServerIP.toString());
+  Logger.infoln(String(F("  mqttServerPort: ")) +
+                String(this->m_mqttServerPort));
+  Logger.infoln(String(F("  mqttUser: ")) + this->m_mqttUser);
+  Logger.infoln(String(F("  mqttPassword: ")) + this->m_mqttPassword);
+  Logger.infoln(String(F("  mqttTopicPrefix: ")) + this->m_mqttTopicPrefix);
+  Logger.infoln(String(F("  loggerLevel: ")) + String(this->m_loggerLevel));
+  Logger.infoln(F("---------------------"));
+  Logger.infoln(F(""));
 }
 
-void testerAdresses() {
-  byte error, address;  // variable for error and I2C address
-  int nDevices;
+std::vector<String> Configuration_Impl::getDS18B20SensorAddresses() {
+  OneWire ow(ONE_WIRE_SENSOR_PIN);
+  DallasTemperature DS18B20sensors(&ow);
+  DS18B20sensors.begin();
 
-  Serial.println("Scanning...");
+  DeviceAddress Thermometer;
 
-  nDevices = 0;
+  size_t deviceCount = 0;
+  Logger.infoln(F("Locating devices..."));
+  Logger.info(F("Found "));
+  deviceCount = DS18B20sensors.getDeviceCount();
+  Logger.info(String(deviceCount), false);
+  Logger.infoln(F(" devices."), false);
+  Logger.infoln(F(""), false);
+
+  Logger.infoln(F("Printing addresses..."));
+  std::vector<String> addressesTemp;
+  for (size_t i = 0; i < deviceCount; i++) {
+    DS18B20sensors.getAddress(Thermometer, i);
+    String address = Configuration.addressToString(Thermometer, 8);
+
+    DS18B20sensors.requestTemperatures();
+
+    float temperature = DS18B20sensors.getTempC(Thermometer);
+
+    Logger.infoln(String(F(" - ")) + address + String(F(" : ")) +
+                  String(temperature));
+    addressesTemp.push_back(address + String(F(" : ")) + String(temperature));
+  }
+
+  return addressesTemp;
+}
+
+std::vector<u16_t> Configuration_Impl::getI2CAddresses() {
+  byte error, address;
+  std::vector<u16_t> i2cAddresses;
+
+  Logger.infoln(F("Scanning I2C devices..."));
+
+  Wire.begin();
+  int nDevices = 0;
   for (address = 1; address < 127; address++) {
-    // The i2c_scanner uses the return value of
-    // the Write.endTransmisstion to see if
-    // a device did acknowledge to the address.
+    Logger.verboseln(String(F("Sanning I2C devices at address 0x")) +
+                     Logger.padLeft(String(address, HEX), 2, '0') + F(" !"));
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
 
     if (error == 0) {
-      Serial.print("I2C device found at address 0x");
-      if (address < 16) Serial.print("0");
-      Serial.print(address, HEX);
-      Serial.println("  !");
+      Logger.verboseln(String(F("I2C device found at address 0x")) +
+                       Logger.padLeft(String(address, HEX), 2, '0') + F(" !"));
+      ;
+
+      i2cAddresses.push_back(address);
       nDevices++;
     } else if (error == 4) {
-      Serial.print("Unknown error at address 0x");
-      if (address < 16) Serial.print("0");
-      Serial.println(address, HEX);
+      Logger.infoln(String(F("Unknown error at address 0x")) +
+                    Logger.padLeft(String(address, HEX), 2, '0') + F(" !"));
     }
   }
   if (nDevices == 0) {
-    Serial.println("No I2C devices found\n");
+    Logger.infoln(F("No I2C devices found."));
   } else {
-    Serial.println("done\n");
+    Logger.infoln(F("done."));
   }
+
+  return i2cAddresses;
 }
 
+void Configuration_Impl::executeCommand(const String &command) {
+  String cmd = command;
+  cmd.trim();
+  Logger.verboseln(String(F("Executing command : ")) + cmd);
+
+  Logger.println(String(F("> ")) + cmd);
+
+  String action = cmd.substring(0, cmd.indexOf(' '));
+  String parameters = cmd.substring(cmd.indexOf(' ') + 1);
+
+  if (action == "set") {
+    String key = parameters.substring(0, parameters.indexOf(' '));
+    String value = parameters.substring(parameters.indexOf(' ') + 1);
+
+    if (key == "poolHeaterInAddress") {
+      this->setPoolHeaterInAddress(value);
+    } else if (key == "poolHeaterOutAddress") {
+      this->setPoolHeaterOutAddress(value);
+    } else if (key == "mqttServerPort") {
+      this->setMqttServerPort(value.toInt());
+    } else if (key == "mqttUser") {
+      this->setMqttUser(value);
+    } else if (key == "mqttPassword") {
+      this->setMqttPassword(value);
+    } else if (key == "mqttTopicPrefix") {
+      this->setMqttTopicPrefix(value);
+    } else if (key == "debug") {
+      int debugLevel = value.toInt();
+      if (debugLevel >= 0 && debugLevel <= 4) {
+        Configuration.setLoggerLevel((LoggerLevel)debugLevel);
+      } else {
+        Logger.errorln(F("Invalid debug level"));
+      }
+    } else {
+      Logger.errorln(String(F("Unknown key ")) + key);
+    }
+  } else if (action == "get") {
+    String key = parameters;
+
+    if (key == "poolHeaterInAddress") {
+      Logger.infoln(String(F("poolHeaterInAddress: ")) +
+                    this->m_poolHeaterInAddressString);
+    } else if (key == "poolHeaterOutAddress") {
+      Logger.infoln(String(F("poolHeaterOutAddress: ")) +
+                    this->m_poolHeaterOutAddressString);
+    } else if (key == "mqttServerIP") {
+      Logger.infoln(String(F("mqttServerIP: ")) +
+                    this->m_mqttServerIP.toString());
+    } else if (key == "mqttServerPort") {
+      Logger.infoln(String(F("mqttServerPort: ")) +
+                    String(this->m_mqttServerPort));
+    } else if (key == "mqttUser") {
+      Logger.infoln(String(F("mqttUser: ")) + this->m_mqttUser);
+    } else if (key == "mqttPassword") {
+      Logger.infoln(String(F("mqttPassword: ")) + this->m_mqttPassword);
+    } else if (key == "mqttTopicPrefix") {
+      Logger.infoln(String(F("mqttTopicPrefix: ")) + this->m_mqttTopicPrefix);
+    } else if (key == "debug") {
+      Logger.infoln(String(F("debug: ")) + Configuration.getLoggerLevel());
+    } else {
+      Logger.errorln(String(F("Unknown key ")) + key);
+    }
+  } else if (action == "save") {
+    Configuration.save();
+  } else if (action == "infos") {
+    Configuration.printInfos();
+  } else if (action == "reboot") {
+    Logger.infoln(F("Rebooting..."));
+    ESP.restart();
+  } else if (action == "help") {
+    Logger.println(F("Available commands :"));
+    Logger.println(F(" Configuration: "));
+    Logger.println(F("  infos"));
+    Logger.println(F("  get <key>"));
+    Logger.println(F("  set <key> <value>"));
+    Logger.println(F("  save"));
+    Logger.println(F("  reboot"));
+    Logger.println(F(""));
+    Logger.println(F("  help"));
+  } else {
+    Logger.errorln(String(F("Unknown action ")) + action);
+  }
+}
 
 const String Configuration_Impl::clientId = String("pool_monitoring");
 

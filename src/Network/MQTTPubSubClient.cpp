@@ -10,10 +10,12 @@ static WiFiClient espClient;
 MQTTPubSubClient::MQTTPubSubClient() {
   this->m_client = new PubSubClient(espClient);
   this->m_client->setBufferSize(1024);
-  Logger.infoln("MQTTPubSubClient initializing");
-  Logger.infoln("Setting MQTT broker...");
-  Logger.infoln("MQTT: IP: " + Configuration.getMqttServerIP().toString());
-  Logger.infoln("MQTT: Port: " + String(Configuration.getMqttServerPort()));
+  Logger.infoln(F("MQTTPubSubClient initializing"));
+  Logger.infoln(F("Setting MQTT broker..."));
+  Logger.infoln(String(F("MQTT: IP: ")) +
+                Configuration.getMqttServerIP().toString());
+  Logger.infoln(String(F("MQTT: Port: ")) +
+                String(Configuration.getMqttServerPort()));
 
   this->m_client->setServer(Configuration.getMqttServerIP(),
                             Configuration.getMqttServerPort());
@@ -21,17 +23,22 @@ MQTTPubSubClient::MQTTPubSubClient() {
 
 void MQTTPubSubClient::reconnect() {
   if (!this->m_client->connected()) {
-    Logger.infoln("MQTT: Reconnecting to MQTT server...");
-    Logger.infoln("MQTT: Client ID: " + Configuration.getClientId());
-    Logger.infoln("MQTT: User: " + Configuration.getMqttUser());
-    Logger.infoln("MQTT: Password: " + Configuration.getMqttPassword());
+    Logger.infoln(F("MQTT: Reconnecting to MQTT server..."));
+    Logger.infoln(String(F("MQTT: Client ID: ")) + Configuration.getClientId());
+    Logger.verboseln(String(F("MQTT: User: ")) + Configuration.getMqttUser());
+    Logger.verboseln(String(F("MQTT: Password: ")) +
+                  Configuration.getMqttPassword());
 
     if (this->m_client->connect(Configuration.getClientId().c_str(),
                                 Configuration.getMqttUser().c_str(),
-                                Configuration.getMqttPassword().c_str())) {
-      Logger.infoln("MQTT: Connected to MQTT server.");
+                                Configuration.getMqttPassword().c_str(),
+                                Configuration.getMqttWillTopic().c_str(), 0, true,
+                                "offline")) {
+      this->m_client->publish(Configuration.getMqttWillTopic().c_str(),
+                              "online");
+      Logger.infoln(String(F("MQTT: Connected to MQTT server.")));
     } else {
-      Logger.errorln("MQTT: Failed to connect to MQTT server.");
+      Logger.errorln(String(F("MQTT: Failed to connect to MQTT server.")));
     }
   }
 }
@@ -41,13 +48,13 @@ void MQTTPubSubClient::publish(const char *topic, const char *payload) {
 
   if (this->m_client->connected()) {
     if (this->m_client->publish(topic, payload)) {
-      Logger.infoln("MQTT: message published to topic '" + String(topic) +
-                    "'.");
+      Logger.verboseln(String(F("MQTT: message published to topic '")) +
+                    String(topic) + String(F("'.")));
     } else {
-      Logger.errorln("MQTT: Failed to publish message to topic '" +
-                     String(topic) + "'.");
+      Logger.errorln(String(F("MQTT: Failed to publish message to topic '")) +
+                     String(topic) + String(F("'.")));
     }
   } else {
-    Logger.errorln("MQTT: Not connected to MQTT server.");
+    Logger.errorln(F("MQTT: Not connected to MQTT server."));
   }
 }

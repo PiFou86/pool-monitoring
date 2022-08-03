@@ -29,8 +29,12 @@ class LCD2004Display : public Readiness {
   inline void ready() { this->m_isReady = true; }
   inline void notReady() { this->m_isReady = false; }
 
+  inline bool isDirty() const { return this->m_isDirty; }
+  inline void dirty() { this->m_isDirty = true; }
+
   String m_messages[4];
   uint8_t m_messageIndex;
+  bool m_isDirty;
 
  public:
   LCD2004Display();

@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <Arduino.h>
 
 class Sensor;
 class OneWire;
@@ -16,4 +17,5 @@ private:
     unsigned long m_lastRead;
     Button *m_diagnosticButton;
     LCD2004Display *m_lcd;
+    String m_command;
 };

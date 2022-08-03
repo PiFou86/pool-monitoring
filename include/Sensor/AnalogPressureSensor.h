@@ -1,19 +1,21 @@
-#pragma once
+// #pragma once
 
-#include <Arduino.h>
+// #include <Arduino.h>
 
-#include "Sensor.h"
+// #include "Sensor.h"
 
-class AnalogPressureSensor : public Sensor {
-public:
-    AnalogPressureSensor(const String &id, SensorAction *sensorAction, uint8_t pin, float minPressure, float maxPressure);
+// class AnalogPressureSensor : public Sensor {
+//  public:
+//   AnalogPressureSensor(const String &id, SensorAction *sensorAction,
+//                        uint8_t pin, float minPressure, float maxPressure);
 
-protected:
-    virtual void readAndInform();
+//  protected:
+//   virtual void readAndInform();
+//   virtual void discovery();
 
-private:
-    uint8_t m_pin;
-    
-    float m_minPressure;
-    float m_maxPressure;
-};
+//  private:
+//   uint8_t m_pin;
+
+//   float m_minPressure;
+//   float m_maxPressure;
+// };
