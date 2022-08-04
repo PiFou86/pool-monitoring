@@ -297,9 +297,9 @@ std::vector<String> Configuration_Impl::getDS18B20SensorAddresses() {
   return addressesTemp;
 }
 
-std::vector<u16_t> Configuration_Impl::getI2CAddresses() {
+std::vector<uint16_t> Configuration_Impl::getI2CAddresses() {
   byte error, address;
-  std::vector<u16_t> i2cAddresses;
+  std::vector<uint16_t> i2cAddresses;
 
   Logger.infoln(F("Scanning I2C devices..."));
 
@@ -401,14 +401,39 @@ void Configuration_Impl::executeCommand(const String &command) {
   } else if (action == "reboot") {
     Logger.infoln(F("Rebooting..."));
     ESP.restart();
+  } else if (action == "scan") {
+    String deviceType = parameters;
+
+    if (deviceType == "i2c") {
+      std::vector<uint16_t> i2cAddresses = Configuration.getI2CAddresses();
+      Logger.println(F("I2C addresses:"));
+      for (size_t i = 0; i < i2cAddresses.size(); i++) {
+        Logger.println(String(F("  - 0x")) +
+                       Logger.padLeft(String(i2cAddresses[i], HEX), 2, '0'));
+      }
+        Logger.println(String(F("")));
+    } else if (deviceType == "ds18b20") {
+      std::vector<String> addresses = Configuration.getDS18B20SensorAddresses();
+      Logger.println(F("DS18B20 addresses:"));
+      for (size_t i = 0; i < addresses.size(); i++) {
+        Logger.println(String("  - ") + addresses[i]);
+      }
+      Logger.println(String(F("")));
+    } else {
+      Logger.errorln(String(F("Unknown device type ")) + deviceType);
+    }
   } else if (action == "help") {
-    Logger.println(F("Available commands :"));
-    Logger.println(F(" Configuration: "));
+    Logger.println(F("Available commands:"));
+    Logger.println(F(" Configuration:"));
     Logger.println(F("  infos"));
     Logger.println(F("  get <key>"));
     Logger.println(F("  set <key> <value>"));
     Logger.println(F("  save"));
     Logger.println(F("  reboot"));
+    Logger.println(F(""));
+    Logger.println(F(" Tools:"));
+    Logger.println(
+        F("  scan <deviceType>   | Available device types : i2c, ds18b20"));
     Logger.println(F(""));
     Logger.println(F("  help"));
   } else {

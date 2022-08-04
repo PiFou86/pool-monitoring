@@ -151,7 +151,7 @@ void WiFiConnectionImpl::prepareWiFiManagerParameters() {
   }
   htmlAdressesString += F("</ul>");
 
-  Logger.infoln(htmlAdressesString);
+  Logger.verboseln(htmlAdressesString);
 
   char *html = new char[htmlAdressesString.length() + 1];
   strcpy(html, htmlAdressesString.c_str());
