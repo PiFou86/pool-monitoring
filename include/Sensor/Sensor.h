@@ -39,9 +39,9 @@ class Sensor : public Readiness {
                        const String &unit) {
     this->m_sensorAction->dataRead(this->m_id, dataName, unit, value);
   }
-  inline void actionDiscovery(const String &device_type, const String &name,
+  inline void actionDiscovery(const String &device_type,
                               const String &unit) const {
-    this->m_sensorAction->discovery(this->m_id, device_type, name, unit);
+    this->m_sensorAction->discovery(this->m_id, device_type, unit);
   }
   virtual void readAndInform() = 0;
   virtual void discovery() = 0;

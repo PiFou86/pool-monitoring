@@ -13,6 +13,7 @@
 #endif
 
 #include <DallasTemperature.h>
+#include <MD5Builder.h>
 #include <OneWire.h>
 #include <Wire.h>
 
@@ -411,7 +412,7 @@ void Configuration_Impl::executeCommand(const String &command) {
         Logger.println(String(F("  - 0x")) +
                        Logger.padLeft(String(i2cAddresses[i], HEX), 2, '0'));
       }
-        Logger.println(String(F("")));
+      Logger.println(String(F("")));
     } else if (deviceType == "ds18b20") {
       std::vector<String> addresses = Configuration.getDS18B20SensorAddresses();
       Logger.println(F("DS18B20 addresses:"));
@@ -419,26 +420,42 @@ void Configuration_Impl::executeCommand(const String &command) {
         Logger.println(String("  - ") + addresses[i]);
       }
       Logger.println(String(F("")));
+    } else if (deviceType == "id") {
+      Logger.println(String(F("ID: ")) + Configuration.getMachineId());
     } else {
       Logger.errorln(String(F("Unknown device type ")) + deviceType);
     }
   } else if (action == "help") {
     Logger.println(F("Available commands:"));
     Logger.println(F(" Configuration:"));
-    Logger.println(F("  infos"));
-    Logger.println(F("  get <key>"));
-    Logger.println(F("  set <key> <value>"));
-    Logger.println(F("  save"));
-    Logger.println(F("  reboot"));
+    Logger.println(F("  infos               | Print configuration infos"));
+    Logger.println(
+        F("  get <key>           | Get the value of a configuration key"));
+    Logger.println(
+        F("  set <key> <value>   | Set configuration value (needs reboot)"));
+    Logger.println(F("  save                | Save configuration"));
+    Logger.println(F("  reboot              | Reboot the device"));
     Logger.println(F(""));
     Logger.println(F(" Tools:"));
     Logger.println(
         F("  scan <deviceType>   | Available device types : i2c, ds18b20"));
+    Logger.println(F("  id                  | Print the device ID"));
     Logger.println(F(""));
     Logger.println(F("  help"));
   } else {
     Logger.errorln(String(F("Unknown action ")) + action);
   }
+}
+
+String Configuration_Impl::getMachineId() {
+  // MD5Builder md5;
+  // md5.begin();
+  // md5.add(String(ESP.getEfuseMac() & 0xFFFFFFFF));
+  // md5.calculate();
+  // return md5.toString();
+
+  uint32_t macPart = ESP.getEfuseMac() & 0xFFFFFFFF;
+  return String(macPart, HEX);
 }
 
 const String Configuration_Impl::clientId = String("pool_monitoring");

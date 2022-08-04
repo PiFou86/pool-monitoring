@@ -94,6 +94,7 @@ public:
     static String addressToString(const uint8_t *uint, uint8_t length);
     static std::vector<String> getDS18B20SensorAddresses();
     static std::vector<u16_t> getI2CAddresses();
+    static String getMachineId();
 };
 
 extern Configuration_Impl Configuration;

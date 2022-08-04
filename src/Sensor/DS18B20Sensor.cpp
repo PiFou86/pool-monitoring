@@ -24,5 +24,5 @@ void DS18B20Sensor::readAndInform() {
 }
 
 void DS18B20Sensor::discovery() {
-  this->actionDiscovery(String(F("temperature")), this->getId(), String(F("°C")));
+  this->actionDiscovery(String(F("temperature")), String(F("°C")));
 }

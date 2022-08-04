@@ -9,4 +9,5 @@ class MQTTPubSubClient {
   MQTTPubSubClient();
   void reconnect();
   void publish(const char *topic, const char *payload);
+  void tick();
 };

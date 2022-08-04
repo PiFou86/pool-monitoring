@@ -6,6 +6,7 @@ class Sensor;
 class OneWire;
 class Button;
 class LCD2004Display;
+class MQTTPubSubClient;
 class Program {
 public:
     Program();
@@ -18,4 +19,5 @@ private:
     Button *m_diagnosticButton;
     LCD2004Display *m_lcd;
     String m_command;
+    MQTTPubSubClient *m_mqttClient;
 };

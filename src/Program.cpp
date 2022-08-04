@@ -3,8 +3,8 @@
 #include <BluetoothSerial.h>
 #include <OneWire.h>
 
-#include "Constantes.h"
 #include "Configuration/Configuration.h"
+#include "Constantes.h"
 #include "Display/LCD2004Display.h"
 #include "Input/Button.h"
 #include "Input/ButtonActionBacklightOn.h"
@@ -95,8 +95,8 @@ Program::Program() {
   Logger.infoln(F("Initializing sensors"));
   this->m_oneWire = new OneWire(ONE_WIRE_SENSOR_PIN);
 
-  MQTTPubSubClient *mqttPubSubClient = new MQTTPubSubClient();
-  SensorActionMQTT *sensorActionMQTT = new SensorActionMQTT(mqttPubSubClient);
+  this->m_mqttClient = new MQTTPubSubClient();
+  SensorActionMQTT *sensorActionMQTT = new SensorActionMQTT(this->m_mqttClient);
   SensorActionLCD2004 *sensorActionLCD2004 =
       new SensorActionLCD2004(this->m_lcd);
   SensorActionAggregator *sensorActionAggregator = new SensorActionAggregator();
@@ -142,6 +142,7 @@ void Program::loop() {
     }
   }
 
+  this->m_mqttClient->tick();
   this->m_diagnosticButton->tick();
   this->m_lcd->tick();
 

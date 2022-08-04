@@ -71,7 +71,7 @@ void WiFiConnectionImpl::prepareWiFiManager() {
 
   this->m_wifiManager->setAPCallback([](WiFiManager *p_wiFiManager) {
     Logger.infoln(F("Connexion au réseau WiFi échouée, on lance le portail !"));
-    GeneralInformation.displayMessage(F("AP lanched !"));
+    GeneralInformation.displayMessage(F("AP launched !"));
     GeneralInformation.displayMessage(String(F("SSID : ")) + WiFi.softAPSSID());
     GeneralInformation.displayMessage(String(F("IP: ")) + WiFi.softAPIP().toString());
   });

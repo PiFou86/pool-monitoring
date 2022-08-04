@@ -37,5 +37,5 @@ void AnalogADS1115PressureSensor::readAndInform() {
 }
 
 void AnalogADS1115PressureSensor::discovery() {
-  this->actionDiscovery(String(F("pressure")), this->getId(), String(F("PSI")));
+  this->actionDiscovery(String(F("pressure")), String(F("PSI")));
 }
