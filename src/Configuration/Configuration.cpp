@@ -420,11 +420,11 @@ void Configuration_Impl::executeCommand(const String &command) {
         Logger.println(String("  - ") + addresses[i]);
       }
       Logger.println(String(F("")));
-    } else if (deviceType == "id") {
-      Logger.println(String(F("ID: ")) + Configuration.getMachineId());
     } else {
       Logger.errorln(String(F("Unknown device type ")) + deviceType);
     }
+  } else if (action == "id") {
+    Logger.println(String(F("ID: ")) + Configuration.getMachineId());
   } else if (action == "help") {
     Logger.println(F("Available commands:"));
     Logger.println(F(" Configuration:"));
