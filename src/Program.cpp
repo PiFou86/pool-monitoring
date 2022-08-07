@@ -148,7 +148,7 @@ void Program::loop() {
 
   unsigned long currentDate = millis();
 
-  if (currentDate - this->m_lastRead > Configuration.getReadInterval()) {
+  if (this->m_lastRead == 0 || currentDate - this->m_lastRead > Configuration.getReadInterval()) {
     Logger.infoln(F("Reading sensors"));
     this->m_lastRead = currentDate;
 

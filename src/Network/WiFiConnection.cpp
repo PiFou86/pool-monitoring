@@ -8,10 +8,10 @@
 
 #include <WiFiManager.h>
 
-#include "Constantes.h"
 #include "Configuration/Configuration.h"
-#include "Log/Logger.h"
+#include "Constantes.h"
 #include "Log/GeneralInformation.h"
+#include "Log/Logger.h"
 
 class IPAddressParameter : public WiFiManagerParameter {
  public:
@@ -49,17 +49,18 @@ class FloatParameter : public WiFiManagerParameter {
   }
 };
 
-WiFiConnectionImpl::WiFiConnectionImpl() 
-: m_wifiManager(nullptr),
-  m_poolHeaterInAddress(nullptr),
-  m_poolHeaterOutAddress(nullptr),
-  m_mqtt_server_ip(nullptr),
-  m_mqtt_server_port(nullptr),
-  m_mqtt_server_user(nullptr),
-  m_mqtt_server_password(nullptr),
-  m_mqtt_topic_prefix(nullptr),
-  m_ds18b20_addresses(nullptr)
- { ; }
+WiFiConnectionImpl::WiFiConnectionImpl()
+    : m_wifiManager(nullptr),
+      m_poolHeaterInAddress(nullptr),
+      m_poolHeaterOutAddress(nullptr),
+      m_mqtt_server_ip(nullptr),
+      m_mqtt_server_port(nullptr),
+      m_mqtt_server_user(nullptr),
+      m_mqtt_server_password(nullptr),
+      m_mqtt_topic_prefix(nullptr),
+      m_ds18b20_addresses(nullptr) {
+  ;
+}
 
 void WiFiConnectionImpl::begin() {
   this->prepareWiFiManager();
@@ -73,12 +74,14 @@ void WiFiConnectionImpl::prepareWiFiManager() {
     Logger.infoln(F("Connexion au réseau WiFi échouée, on lance le portail !"));
     GeneralInformation.displayMessage(F("AP launched !"));
     GeneralInformation.displayMessage(String(F("SSID : ")) + WiFi.softAPSSID());
-    GeneralInformation.displayMessage(String(F("IP: ")) + WiFi.softAPIP().toString());
+    GeneralInformation.displayMessage(String(F("IP: ")) +
+                                      WiFi.softAPIP().toString());
   });
 
   this->m_wifiManager->setSaveParamsCallback([this]() {
     Logger.infoln(
-        F("Sauvegarde de la configuration effectuée par l'utilisateur dans le portail..."));
+        F("Sauvegarde de la configuration effectuée par l'utilisateur dans le "
+          "portail..."));
 
     Configuration.setPoolHeaterInAddress(
         this->m_poolHeaterInAddress->getValue());
@@ -97,7 +100,6 @@ void WiFiConnectionImpl::prepareWiFiManager() {
 
     Configuration.save();
     // ESP.restart();
-
   });
 
   this->m_wifiManager->setConfigPortalTimeout(180);
@@ -112,9 +114,12 @@ void WiFiConnectionImpl::prepareWiFiManager() {
 }
 
 void WiFiConnectionImpl::prepareWiFiManagerParameters() {
-  this->m_poolHeaterInAddress = new WiFiManagerParameter("sensor_heater_in_address", "Pool Heater In Address", Configuration.getPoolHeaterInAddressAsString().c_str(), 50);
-  this->m_poolHeaterOutAddress = new WiFiManagerParameter("sensor_heater_out_address", "Pool Heater Out Address", Configuration.getPoolHeaterOutAddressAsString().c_str(), 50);
-
+  this->m_poolHeaterInAddress = new WiFiManagerParameter(
+      "sensor_heater_in_address", "Pool Heater In Address",
+      Configuration.getPoolHeaterInAddressAsString().c_str(), 50);
+  this->m_poolHeaterOutAddress = new WiFiManagerParameter(
+      "sensor_heater_out_address", "Pool Heater Out Address",
+      Configuration.getPoolHeaterOutAddressAsString().c_str(), 50);
 
   this->m_mqtt_server_ip = new IPAddressParameter(
       "mqtt_server_ip", "MQTT Server IP", Configuration.getMqttServerIP());
@@ -132,7 +137,8 @@ void WiFiConnectionImpl::prepareWiFiManagerParameters() {
                                Configuration.getMqttTopicPrefix().c_str(), 50);
 
   this->m_wifiManager->setParamsPage(true);
-  std::vector<const char *> menu = {"wifi","info","param","sep","restart","exit"};
+  std::vector<const char *> menu = {"wifi", "info",    "param",
+                                    "sep",  "restart", "exit"};
   this->m_wifiManager->setMenu(menu);
   this->m_wifiManager->addParameter(this->m_poolHeaterInAddress);
   this->m_wifiManager->addParameter(this->m_poolHeaterOutAddress);
@@ -147,7 +153,8 @@ void WiFiConnectionImpl::prepareWiFiManagerParameters() {
 
   String htmlAdressesString = F("Adresses :<ul>");
   for (size_t i = 0; i < addressesTemp.size(); i++) {
-    htmlAdressesString += String(F("<li>")) + addressesTemp[i] + String(F("</li>"));
+    htmlAdressesString +=
+        String(F("<li>")) + addressesTemp[i] + String(F("</li>"));
   }
   htmlAdressesString += F("</ul>");
 
@@ -158,6 +165,9 @@ void WiFiConnectionImpl::prepareWiFiManagerParameters() {
 
   this->m_ds18b20_addresses = new WiFiManagerParameter(html);
   this->m_wifiManager->addParameter(this->m_ds18b20_addresses);
+
+  this->m_wifiManager->setConfigPortalTimeout(30);
+  this->m_wifiManager->setFindBestRSSI(true);
 }
 
 void WiFiConnectionImpl::initParameterValues() {
@@ -184,9 +194,32 @@ bool WiFiConnectionImpl::tryToConnectToAP() {
   return WiFi.status() == WL_CONNECTED;
 }
 
+bool WiFiConnectionImpl::reconnectIfNeeded() {
+  int trial = 0;
+  if (WiFi.status() != WL_CONNECTED) {
+    Logger.infoln(F("WiFi disconnected, trying to reconnect..."));
+    if (this->m_wifiManager->getWiFiIsSaved()) {
+      Logger.info(F("Trying to reconnect to WiFi"));
+      WiFi.reconnect();
+      while (WiFi.status() != WL_CONNECTED && trial < 10) {
+        Logger.info(F("."), false);
+        delay(1000);
+        trial++;
+      }
+      Logger.infoln(F(""), false);
+      Logger.infoln(String(F("WiFi reconnected ")) +
+                    String((WiFi.status() == WL_CONNECTED) ? F("Success !")
+                                                           : F("Failed !")) +
+                    String(F(" (")) + String(WiFi.status()) + String(F(")")));
+      //Logger.infoln(F(""), false);
+    }
+  }
+  return WiFi.status() == WL_CONNECTED;
+}
+
 bool WiFiConnectionImpl::startPortal() {
   this->m_wifiManager->startConfigPortal(CONFIGURATION_PORTAL_SSID);
-  //this->m_wifiManager->startWebPortal();
+  // this->m_wifiManager->startWebPortal();
 
   return WiFi.status() == WL_CONNECTED;
 }

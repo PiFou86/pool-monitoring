@@ -67,3 +67,31 @@ Configuration infos :
   debug: 4
 ---------------------
 ```
+
+## Networking
+
+### Trying to improve signal quality (Failed !)
+
+After testing the signal quality, I found that the signal is not good enough. I've tried to add an external antenna, but it didn't work.
+
+As described on some web pages, one can add an external antenna to your ESP32. To do it, one can cut the existing antenna on the ESP32 module and solder wires on it. Here is some links ([Link #1](https://community.home-assistant.io/t/how-to-add-an-external-antenna-to-an-esp-board/131601), [Link #2](https://www.hackster.io/simon-vavpotic/esp32-and-esp8266-external-antenna-f28e6b))
+
+![Cut the antenna](img/ESP32_dev_board_cut_antenna_low.jpg)
+
+To make my hack more conveniant, I've put an UFL seat IPEX / IPX connector.
+
+![ESP32 UFL seat IPEX / IPX](img/ESP32_dev_board_add_UFL_seat_IPEX_IPX_low.jpg)
+
+![ESP32 board with external antenna](img/ESP32_dev_board_with_UFL_seat_IPEX_IPX_low.jpg)
+
+My tests shown similars signal quality with unmodified ESP32 dev board and the modified one. In my case, the problem could be the antenna quality. So, for me, that's a waste of time, but could be an interesting idea to try.
+
+### Connecting to the network
+
+My network contains multiple APs. When trying to connect to a given SSID, the ESP32 will try to connect to the first AP that matches the SSID. But this AP is not always the best one. So I've add a scan of available APs with the SSID to find the one with the best RSSI (signal quality). This method works for me and is the one propose on the source code.
+
+## Home assistant
+
+When the device is setup, it can be used in Home Assistant. It will send autodiscovery messages to the MQTT broker. It can be easily integrated in Home Assistant.
+
+![Home assistant integration](img/Hass_autodiscovery.jpg)

@@ -5,6 +5,8 @@
 #include "Configuration/Configuration.h"
 #include "Log/Logger.h"
 
+#include "Network/WiFiConnection.h"
+
 static WiFiClient espClient;
 
 MQTTPubSubClient::MQTTPubSubClient() {
@@ -22,7 +24,7 @@ MQTTPubSubClient::MQTTPubSubClient() {
 }
 
 void MQTTPubSubClient::reconnect() {
-  if (!this->m_client->connected()) {
+  if (WiFiConnection.reconnectIfNeeded() && !this->m_client->connected()) {
     Logger.infoln(F("MQTT: Reconnecting to MQTT server..."));
     Logger.infoln(String(F("MQTT: Client ID: ")) + Configuration.getClientId());
     Logger.verboseln(String(F("MQTT: User: ")) + Configuration.getMqttUser());

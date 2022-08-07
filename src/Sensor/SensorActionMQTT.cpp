@@ -28,7 +28,7 @@ void SensorActionMQTT::discovery(const String &id, const String &device_type,
       F("\"") + String(F(",\"device\": {")) + String(F("\"identifiers\":\"")) +
       Configuration.getMachineId() + F("\"") +
       String(F(",\"manufacturer\":\"PFL Technology\"")) +
-      String(F(",\"model\":\"poolMonitoring PMSE01\"")) +
+      String(F(",\"model\":\"Pool Monitoring PMSE01 v0.1\"")) +
       String(F(",\"name\":\"Pool Monitoring System\"")) +
       String(F(",\"sw_version\":\"")) + ESP.getSketchMD5() + F("\"}") +
       String(F(",\"device_class\":\"")) + device_type +

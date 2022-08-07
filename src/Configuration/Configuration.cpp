@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "Constantes.h"
+#include "Network/WiFiConnection.h"
 
 #if ESP8266
 #include <LittleFS.h>
@@ -16,6 +17,7 @@
 #include <MD5Builder.h>
 #include <OneWire.h>
 #include <Wire.h>
+#include <esp_wifi.h>
 
 #include "Log/Logger.h"
 
@@ -420,11 +422,64 @@ void Configuration_Impl::executeCommand(const String &command) {
         Logger.println(String("  - ") + addresses[i]);
       }
       Logger.println(String(F("")));
+    } else if (deviceType == "wifi") {
+      std::vector<WiFiNetwork> networks = Configuration.getWiFiNetworks();
+      Logger.println(F("Wifi networks:"));
+      for (size_t i = 0; i < networks.size(); i++) {
+        String encryption = "unknown";
+        switch (networks[i].encryptionType) {
+          case (WIFI_AUTH_OPEN):
+            encryption = "Open";
+            break;
+          case (WIFI_AUTH_WEP):
+            encryption = "WEP";
+            break;
+          case (WIFI_AUTH_WPA_PSK):
+            encryption = "WPA_PSK";
+            break;
+          case (WIFI_AUTH_WPA2_PSK):
+            encryption = "WPA2_PSK";
+            break;
+          case (WIFI_AUTH_WPA_WPA2_PSK):
+            encryption = "WPA_WPA2_PSK";
+            break;
+          case (WIFI_AUTH_WPA2_ENTERPRISE):
+            encryption = "WPA2_ENTERPRISE";
+            break;
+        }
+        Logger.println(
+            String(F("  - ")) + networks[i].ssid + String(F(" (")) +
+            encryption + String(F(") : ")) + String(networks[i].rssi) +
+            String(F(" dBm - ")) +
+            String(constrain((100.0 + networks[i].rssi) * 2, 0, 100)) +
+            String(F("% - BSSID: ")) + networks[i].bssid);
+      }
+      Logger.println("");
     } else {
       Logger.errorln(String(F("Unknown device type ")) + deviceType);
     }
   } else if (action == "id") {
     Logger.println(String(F("ID: ")) + Configuration.getMachineId());
+  } else if (action == "network") {
+    Logger.println(String(F("Network: ")));
+    Logger.println(String(F("  - SSID: ")) + WiFi.SSID());
+    Logger.println(String(F("  - IP: ")) + WiFi.localIP().toString());
+    Logger.println(String(F("  - MAC: ")) + WiFi.macAddress());
+    Logger.println(String(F("  - RSSI: ")) + String(WiFi.RSSI()) +
+                   String(F(" dBm")));
+    Logger.println(String(F("  - Channel: ")) + String(WiFi.channel()));
+    Logger.println(String(F("  - DNS: ")) + WiFi.dnsIP().toString());
+    Logger.println(String(F("  - DNS: ")) + WiFi.dnsIP(1).toString());
+    wifi_config_t conf;
+    esp_wifi_get_config(WIFI_IF_STA, &conf);
+    Logger.println(String(F("  - SSID: ")) + String((char *)conf.sta.ssid));
+    Logger.verboseln(String(F("  - Password: ")) + String((char *)conf.sta.password));
+
+    Logger.println(String(F("")));
+
+  } else if (action == "portal") {
+    Logger.println(String(F("Launching portal... ")));
+    WiFiConnection.startPortal();
   } else if (action == "help") {
     Logger.println(F("Available commands:"));
     Logger.println(F(" Configuration:"));
@@ -438,10 +493,12 @@ void Configuration_Impl::executeCommand(const String &command) {
     Logger.println(F(""));
     Logger.println(F(" Tools:"));
     Logger.println(
-        F("  scan <deviceType>   | Available device types : i2c, ds18b20"));
+        F("  scan <deviceType>   | Available device types : i2c, ds18b20, "
+          "wifi"));
     Logger.println(F("  id                  | Print the device ID"));
+    Logger.println(F("  network             | Print the network infos"));
     Logger.println(F(""));
-    Logger.println(F("  help"));
+    Logger.println(F("  help               | Print this help"));
   } else {
     Logger.errorln(String(F("Unknown action ")) + action);
   }
@@ -456,6 +513,20 @@ String Configuration_Impl::getMachineId() {
 
   uint32_t macPart = ESP.getEfuseMac() & 0xFFFFFFFF;
   return String(macPart, HEX);
+}
+
+std::vector<WiFiNetwork> Configuration_Impl::getWiFiNetworks() {
+  std::vector<WiFiNetwork> networks;
+  WiFi.scanNetworks();
+  for (int i = 0; i < WiFi.scanComplete(); i++) {
+    WiFiNetwork network;
+    network.ssid = WiFi.SSID(i);
+    network.rssi = WiFi.RSSI(i);
+    network.encryptionType = WiFi.encryptionType(i);
+    network.bssid = WiFi.BSSIDstr(i);
+    networks.push_back(network);
+  }
+  return networks;
 }
 
 const String Configuration_Impl::clientId = String("pool_monitoring");

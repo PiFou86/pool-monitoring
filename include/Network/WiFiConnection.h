@@ -30,6 +30,8 @@ class WiFiConnectionImpl {
   WiFiConnectionImpl();
   void begin();
   bool startPortal();
+  bool reconnectIfNeeded();
+
 };
 
 extern WiFiConnectionImpl WiFiConnection;

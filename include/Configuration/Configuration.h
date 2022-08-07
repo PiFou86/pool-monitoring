@@ -11,6 +11,13 @@
 
 #include "Log/Logger.h"
 
+struct WiFiNetwork {
+    String ssid;
+    long rssi;
+    byte encryptionType;
+    String bssid;
+};
+
 class Configuration_Impl {
 private:
     bool m_isLoaded;
@@ -94,6 +101,7 @@ public:
     static String addressToString(const uint8_t *uint, uint8_t length);
     static std::vector<String> getDS18B20SensorAddresses();
     static std::vector<u16_t> getI2CAddresses();
+    static std::vector<WiFiNetwork> getWiFiNetworks();
     static String getMachineId();
 };
 
