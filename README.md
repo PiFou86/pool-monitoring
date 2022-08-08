@@ -1,16 +1,27 @@
 # Pool monitoring system
 
-This code is a simple pool monitoring system. The system is designed to be run on an ESP32. It can take :
+THis "pool monitoring system" is designed to analyse and follow up the status of your pool environment.
+Using your phone cell, you can easily check and control temperature, water pressure and humidity.
+
+## Architecture
+
+THe architecture is designed around:
+- the microcontroler ESP32, as hardware
+- an integrated AP in ESP32, as web server
+- Home assitance with MQTT broker to pool frequently information to the phone cell
+
+THe programming language is written in C++ in PlatformIO
+These choises are based on recent and efficient desgin.
+
+The device can be configured by a web interface (first launch / WiFi connexion error / long press).
+
+. As, exempla, it can show :
 
 - in / out temperature of the heat pump
 - external temperature, pressure and humidity
 - water pressure
 
-The device can be configured by a web interface (first launch / WiFi connexion error / long press). An AP is created on the ESP32. You can connect to it with a browser.
-
-The device sends data to an MQTT broker and easily integrate in Home Assistant with MQTT autodiscovery.
-
-It is written in C++ in Platform IO. The first intention was to use an ESP8266 as a microcontroller, but it turned out to be memory limited, so I decided to use an ESP32.
+The device can be configured using a a brower on any computer, phone cell or tablet (first launch / WiFi connexion error / long press). An AP is created on the ESP32. This version is not protected versus hacking.
 
 The system is given has is. The code is open source and can be used for personal use.
 
