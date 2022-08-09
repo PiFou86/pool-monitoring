@@ -1,11 +1,11 @@
 # Pool monitoring system
 
-THis "pool monitoring system" is designed to analyse and follow up the status of your pool environment.
+This "pool monitoring system" is designed to analyse and follow up the status of your pool environment.
 Using your phone cell, you can easily check and control temperature, water pressure and humidity.
 
 ## Architecture
 
-THe architecture is designed around:
+The architecture is designed around:
 - the microcontroler ESP32, as hardware
 - an integrated AP in ESP32, as web server
 - Home assitance with MQTT broker to pool frequently information to the phone cell
@@ -15,13 +15,13 @@ These choises are based on recent and efficient desgin.
 
 The device can be configured by a web interface (first launch / WiFi connexion error / long press).
 
-. As, exempla, it can show :
+As, exempla, it can show :
 
 - in / out temperature of the heat pump
 - external temperature, pressure and humidity
 - water pressure
 
-The device can be configured using a a brower on any computer, phone cell or tablet (first launch / WiFi connexion error / long press). An AP is created on the ESP32. This version is not protected versus hacking.
+The device can be configured using a brower on any computer, phone cell or tablet (first launch / WiFi connexion error / long press). An AP is created on the ESP32. This version is not protected versus hacking.
 
 The system is given has is. The code is open source and can be used for personal use.
 
