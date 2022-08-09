@@ -53,10 +53,11 @@ Available commands:
   reboot              | Reboot the device
 
  Tools:
-  scan <deviceType>   | Available device types : i2c, ds18b20
+  scan <deviceType>   | Available device types : i2c, ds18b20, wifi
   id                  | Print the device ID
-
-  help
+  network             | Print the network infos
+  
+  help                | Print this help"
 ```
 
 Here is some examples of commands:
