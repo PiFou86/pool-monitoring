@@ -498,7 +498,7 @@ void Configuration_Impl::executeCommand(const String &command) {
     Logger.println(F("  id                  | Print the device ID"));
     Logger.println(F("  network             | Print the network infos"));
     Logger.println(F(""));
-    Logger.println(F("  help               | Print this help"));
+    Logger.println(F("  help                | Print this help"));
   } else {
     Logger.errorln(String(F("Unknown action ")) + action);
   }
