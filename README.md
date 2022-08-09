@@ -6,12 +6,12 @@ Using your phone cell, you can easily check and control temperature, water press
 ## Architecture
 
 The architecture is designed around:
+
 - the microcontroler ESP32, as hardware
 - an integrated AP in ESP32, as web server
 - Home assitance with MQTT broker to pool frequently information to the phone cell
 
-THe programming language is written in C++ in PlatformIO
-These choises are based on recent and efficient desgin.
+The programming language is C++ in PlatformIO. These choises are based on recent and efficient desgin.
 
 The device can be configured by a web interface (first launch / WiFi connexion error / long press).
 
@@ -27,14 +27,14 @@ The system is given has is. The code is open source and can be used for personal
 
 ## Hardware
 
-This project requires an ESP32 as a microcontroller and some peripherals:
+This project requires an ESP32 ([A]) as a microcontroller and some peripherals:
 
-- 1 BME280 sensor (I2C) for external temperature, pressure and humidity
-- 2 DS18B20 sensors (1 wire) for water in and out temperatures
-- 1 ADS1115 ADC (I2C) for  the analog water pressure sensor
-- 1 analog water pressure sensor 0-30 PSI (0-4,5V) for the sand filter
-- 1 I2C LCD 20x4 to display current information
-- 1 push button to activate the LCD backlight (simple press) or launch configuration mode (long press)
+- 1 BME280 sensor (I2C) for external temperature, pressure and humidity [B]
+- 2 DS18B20 sensors (1 wire) for water in and out temperatures [C]
+- 1 ADS1115 ADC (I2C) for  the analog water pressure sensor [D]
+- 1 analog water pressure sensor 0-30 PSI (0-4,5V) for the sand filter [E]
+- 1 I2C LCD 20x4 to display current information [F]
+- 1 push button to activate the LCD backlight (simple press) or launch configuration mode (long press) [G]
 
 ![Schematic](img/schema01.png)
 
