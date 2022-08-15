@@ -15,7 +15,7 @@ The programming language is C++ in PlatformIO. These choises are based on recent
 
 The device can be configured by a web interface (first launch / WiFi connexion error / long press).
 
-As, exempla, it can show :
+See her somes exemples:
 
 - in / out temperature of the heat pump
 - external temperature, pressure and humidity
