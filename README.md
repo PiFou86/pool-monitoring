@@ -1,7 +1,7 @@
 # Pool monitoring system
 
 This "pool monitoring system" is designed to analyse and follow up the status of your pool environment.
-Using your phone cell, you can easily check and control temperature, water pressure and humidity.
+Using your cell phone, you can easily check and control temperature, water pressure and humidity.
 
 ## Architecture
 
@@ -21,7 +21,7 @@ As, exempla, it can show :
 - external temperature, pressure and humidity
 - water pressure
 
-The device can be configured using a brower on any computer, phone cell or tablet (first launch / WiFi connexion error / long press). An AP is created on the ESP32. This version is not protected versus hacking.
+The device can be configured using a brower on any computer, phone cell or tablet (first launch / WiFi connexion error / long press). An AP is created on the ESP32. This version is not protected against hacking.
 
 The system is given has is. The code is open source and can be used for personal use.
 
