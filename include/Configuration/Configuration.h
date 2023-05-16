@@ -79,7 +79,8 @@ public:
     const String & getMqttTopicPrefix() const { return this->m_mqttTopicPrefix; };
     inline void setMqttTopicPrefix(const String &mqttTopicPrefix) { this->m_mqttTopicPrefix = mqttTopicPrefix; this->dirty(); };
 
-    inline unsigned long getReadInterval() const { return 15000; };
+    inline unsigned long getReadInterval() const { return 30000; };
+    inline unsigned long getRetryInterval() const { return 60000; };
     inline const String &getClientId() const { return clientId; };
 
     void printInfos() const;

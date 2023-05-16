@@ -4,7 +4,6 @@
 
 #include "Configuration/Configuration.h"
 #include "Log/Logger.h"
-
 #include "Network/WiFiConnection.h"
 
 static WiFiClient espClient;
@@ -25,22 +24,28 @@ MQTTPubSubClient::MQTTPubSubClient() {
 
 void MQTTPubSubClient::reconnect() {
   if (WiFiConnection.reconnectIfNeeded() && !this->m_client->connected()) {
-    Logger.infoln(F("MQTT: Reconnecting to MQTT server..."));
-    Logger.infoln(String(F("MQTT: Client ID: ")) + Configuration.getClientId());
-    Logger.verboseln(String(F("MQTT: User: ")) + Configuration.getMqttUser());
-    Logger.verboseln(String(F("MQTT: Password: ")) +
-                     Configuration.getMqttPassword());
+    long currentTime = millis();
+    if (currentTime - this->m_lastReconnectAttempt >
+        Configuration.getRetryInterval()) {
+      this->m_lastReconnectAttempt = currentTime;
+      
+      Logger.infoln(F("MQTT: Reconnecting to MQTT server..."));
+      Logger.infoln(String(F("MQTT: Client ID: ")) +
+                    Configuration.getClientId());
+      Logger.verboseln(String(F("MQTT: User: ")) + Configuration.getMqttUser());
+      Logger.verboseln(String(F("MQTT: Password: ")) +
+                       Configuration.getMqttPassword());
 
-    if (this->m_client->connect(Configuration.getClientId().c_str(),
-                                Configuration.getMqttUser().c_str(),
-                                Configuration.getMqttPassword().c_str(),
-                                Configuration.getMqttWillTopic().c_str(), 0,
-                                true, "offline")) {
-      this->publish(Configuration.getMqttWillTopic().c_str(),
-                              "online");
-      Logger.infoln(String(F("MQTT: Connected to MQTT server.")));
-    } else {
-      Logger.errorln(String(F("MQTT: Failed to connect to MQTT server.")));
+      if (this->m_client->connect(Configuration.getClientId().c_str(),
+                                  Configuration.getMqttUser().c_str(),
+                                  Configuration.getMqttPassword().c_str(),
+                                  Configuration.getMqttWillTopic().c_str(), 0,
+                                  true, "offline")) {
+        this->publish(Configuration.getMqttWillTopic().c_str(), "online");
+        Logger.infoln(String(F("MQTT: Connected to MQTT server.")));
+      } else {
+        Logger.errorln(String(F("MQTT: Failed to connect to MQTT server.")));
+      }
     }
   }
 }

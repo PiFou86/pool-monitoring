@@ -4,6 +4,7 @@ class PubSubClient;
 class MQTTPubSubClient {
  private:
   PubSubClient *m_client;
+  long m_lastReconnectAttempt;
 
  public:
   MQTTPubSubClient();

@@ -116,6 +116,8 @@ Program::Program() {
   Logger.infoln(F("Sensors initialized"));
 
   Logger.infoln(F("Initializing inputs"));
+  Logger.infoln(String(F("Initializing diagnostic button")) + String(DIAGNOSTIC_PUSH_BUTTON_PIN));
+  Logger.infoln(String(digitalRead(DIAGNOSTIC_PUSH_BUTTON_PIN)));
   this->m_diagnosticButton = new Button(
       DIAGNOSTIC_PUSH_BUTTON_PIN, new ButtonActionBacklightOn(this->m_lcd),
       new ButtonActionConfiguration());

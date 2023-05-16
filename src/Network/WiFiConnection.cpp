@@ -191,6 +191,12 @@ bool WiFiConnectionImpl::tryToConnectToAP() {
   this->m_wifiManager->autoConnect(CONFIGURATION_PORTAL_SSID,
                                    CONFIGURATION_PORTAL_PASSWORD);
 
+  if (WiFi.status() == WL_CONNECTED) {
+    Logger.info("Connecté au réseau WiFi, adresse IP : ");
+    Logger.infoln(WiFi.localIP().toString());
+  } else {
+    Logger.infoln("Pas de connexion au réseau WiFi");
+  }
   return WiFi.status() == WL_CONNECTED;
 }
 
