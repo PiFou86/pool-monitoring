@@ -26,7 +26,7 @@
     #define ONE_WIRE_SENSOR_PIN           2
 #elif ESP32
     #define DIAGNOSTIC_PUSH_BUTTON_PIN    16
-    #define ONE_WIRE_SENSOR_PIN           5
+    #define ONE_WIRE_SENSOR_PIN           17
 #endif
 
 

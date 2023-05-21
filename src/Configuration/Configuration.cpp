@@ -353,6 +353,10 @@ void Configuration_Impl::executeCommand(const String &command) {
       this->setPoolHeaterInAddress(value);
     } else if (key == "poolHeaterOutAddress") {
       this->setPoolHeaterOutAddress(value);
+    } else if (key == "mqttServerIP") {
+      IPAddress ip;
+      ip.fromString(value);
+      this->setMqttServerIP(IPAddress(ip));
     } else if (key == "mqttServerPort") {
       this->setMqttServerPort(value.toInt());
     } else if (key == "mqttUser") {
@@ -399,6 +403,8 @@ void Configuration_Impl::executeCommand(const String &command) {
     }
   } else if (action == "save") {
     Configuration.save();
+  } else if (action == "portal") {
+    WiFiConnection.startPortal();
   } else if (action == "infos") {
     Configuration.printInfos();
   } else if (action == "reboot") {

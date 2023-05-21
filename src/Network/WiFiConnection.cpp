@@ -140,6 +140,7 @@ void WiFiConnectionImpl::prepareWiFiManagerParameters() {
   std::vector<const char *> menu = {"wifi", "info",    "param",
                                     "sep",  "restart", "exit"};
   this->m_wifiManager->setMenu(menu);
+  this->m_wifiManager->setConfigPortalTimeout(120);
   this->m_wifiManager->addParameter(this->m_poolHeaterInAddress);
   this->m_wifiManager->addParameter(this->m_poolHeaterOutAddress);
 
@@ -158,6 +159,7 @@ void WiFiConnectionImpl::prepareWiFiManagerParameters() {
   }
   htmlAdressesString += F("</ul>");
 
+  Logger.verboseln(F("Adresses :"));
   Logger.verboseln(htmlAdressesString);
 
   char *html = new char[htmlAdressesString.length() + 1];
@@ -192,10 +194,10 @@ bool WiFiConnectionImpl::tryToConnectToAP() {
                                    CONFIGURATION_PORTAL_PASSWORD);
 
   if (WiFi.status() == WL_CONNECTED) {
-    Logger.info("Connecté au réseau WiFi, adresse IP : ");
+    Logger.info("Connected to WiFi :");
     Logger.infoln(WiFi.localIP().toString());
   } else {
-    Logger.infoln("Pas de connexion au réseau WiFi");
+    Logger.infoln("No WiFi connection");
   }
   return WiFi.status() == WL_CONNECTED;
 }
